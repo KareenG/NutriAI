@@ -1451,9 +1451,9 @@ def change_meal_of_meal_plan(id_client, current_meal_plan='', nutri_comment_temp
     if rules:
 
         prompt += f"\nthese restrictions are very important to take into account when ' \
-                  'generating this meal because they are related to the blood tests of this client. ' \
-                  'inside the () are the reasons of the relevant restrictions (for each restriction that is not ' \
-                  'understandable Ignore):\n"
+                      'generating this meal because they are related to the blood tests of this client. ' \
+                      'inside the () are the reasons of the relevant restrictions (for each restriction that is not ' \
+                      'understandable Ignore):\n"
 
         i = 1
         for test_name, test_d in rules.items():
@@ -1467,7 +1467,7 @@ def change_meal_of_meal_plan(id_client, current_meal_plan='', nutri_comment_temp
 
                         if res_type in ['under', 'in', 'above']:
                             restric += f"(result of blood test {test_name} is {res_type} the normal range),\n"
-                            prompt += restric  #+ '\n '
+                            prompt += restric  # + '\n '
                             i += 1
 
     i = 1
@@ -1483,18 +1483,19 @@ def change_meal_of_meal_plan(id_client, current_meal_plan='', nutri_comment_temp
     prompt += f"\n\n"
 
     meal_type_list = ['breakfast', 'snack1', 'lunch', 'snack2', 'dinner']
+    k = 1
+    prev_meal_rates_prompt = f""
     for meal_type in meal_type_list:
         prev_meals = get_previous_ranked_meals(id_client, meal_type)  # list of tuples
-
         if prev_meals:
-            #print('prev_meals: ', prev_meals)
-            prompt += f"\nThese are previous meals and their rate of satisfaction of this client:\n "
-            k = 1
             for meal_type_c, value in prev_meals:
-                prompt += f"option {k}: {meal_type_c} with rate of satisfaction: {value}, \n"
+                prev_meal_rates_prompt += f"option {k}: {meal_type_c} with rate of satisfaction: {value}, \n\n"
                 k += 1
 
-            prompt += f"\n\n"
+    if prev_meal_rates_prompt:
+        prompt += f"\nThese are previous meals and their rate of satisfaction of this client:\n {prev_meal_rates_prompt}"
+        prompt += f"\n\n"
+
 
     model = genai.GenerativeModel('gemini-pro')
     genai.configure(api_key=os.getenv("MY_API_KEY"))
