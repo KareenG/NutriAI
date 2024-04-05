@@ -1,4 +1,4 @@
- # NutriAA Planner
+ # NutriAI Planner
 
 NutriAI Planner is a sophisticated meal planning tool designed to assist nutritionists in creating personalized meal plans. Leveraging the power of artificial intelligence, NutriAI Planner adapts to individual client health data, dietary preferences, nutritionist feedbacks/comments, and blood tests to deliver a tailored meal plans that support nutritional goals and wellness.
 
@@ -20,8 +20,8 @@ Before you begin, ensure you have the following installed:
 
 1. Clone the repository to your local machine:
     bash
-    git clone https://github.com/yourusername/NutriAAPlanner.git
-    cd NutriAAPlanner
+    git clone https://github.com/yourusername/NutriAIPlanner.git
+    cd NutriAIPlanner
     
 
 2. Create and activate the virtual environment using the provided environment.yml file:
