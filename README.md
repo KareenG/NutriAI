@@ -27,7 +27,7 @@ Before you begin, ensure you have the following installed:
 2. Create and activate the virtual environment using the provided environment.yml file:
     bash
     conda env create -f environment.yml
-    conda activate NutriAAPlanner-env
+    conda activate NutriAIPlanner-env
     
 
 ## Configuration
