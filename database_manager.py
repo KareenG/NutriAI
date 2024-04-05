@@ -112,6 +112,9 @@ def create_database():
             FOREIGN KEY (id_client) REFERENCES clients(id_number)
             )''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS general_guidelines
+                     (guideline TEXT)''')
+
     conn.commit()
     conn.close()
 
@@ -122,21 +125,11 @@ create_database()
 
 # Add rule to the rules table
 def add_rule(rule, restriction, id_c, meal_t, meal_data):
-    model = genai.GenerativeModel('gemini-pro')
-    genai.configure(api_key='AIzaSyC1KgUEcEDdzGtPhOx7FsJ6cYxexjA1mUE')
-
-    cont = 'is this text ' + restriction + ' understandable or has any meaning? if Yes the response should be "True", ' \
-                                           'otherwise "False"'
-    response = model.generate_content(cont)
-    response_text = response.text
-    if response_text == "False":
-        print(f"This restriction: {restriction} has no meaning, Therefor, ignored.")
-    else:
-        conn = sqlite3.connect('my_rules.db')
-        c = conn.cursor()
-        c.execute("INSERT INTO rules (rule, restrictions, id_client, meal_type, meal_info) VALUES (?, ?, ?, ?, ?)", (rule, restriction, id_c, meal_t, meal_data))
-        conn.commit()
-        conn.close()
+    conn = sqlite3.connect('my_rules.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO rules (rule, restrictions, id_client, meal_type, meal_info) VALUES (?, ?, ?, ?, ?)", (rule, restriction, id_c, meal_t, meal_data))
+    conn.commit()
+    conn.close()
 
 
 # Extract all restrictions from the rules table
@@ -167,13 +160,14 @@ def add_client(name, id_number, age, gender, current_weight, goal_weight, height
     conn.commit()
     conn.close()
 
+
 def add_guideline(guideline):
     model = genai.GenerativeModel('gemini-pro')
     genai.configure(api_key='AIzaSyC1KgUEcEDdzGtPhOx7FsJ6cYxexjA1mUE')
 
-    cont = 'is this text ' + guideline + ' understandable or has any meaning? if Yes the response should be "True", ' \
-                                           'otherwise "False"'
-    response = model.generate_content(cont)
+    # cont = 'is this text ' + guideline + ' understandable or has any meaning? if Yes the response should be "True", ' \
+    #                                        'otherwise "False"'
+    response = model.generate_content(guideline)#cont)
     response_text = response.text
     if response_text == "False":
         print(f"This guideline: {guideline} has no meaning, Therefor, ignored.")
@@ -315,11 +309,11 @@ def add_meal_plan(client_id, day, meal_dict, meal_explanations_dict):
             # Prepare the data tuple for insertion
             data = (
                 client_id, day, current_date,
-                meal_dict[0], None,  #.get(0, ("", None))[0], meal_dict.get(0, ("", None))[1],  # Breakfast and rate
-                meal_dict[1], None, #.get(1, ("", None))[0], meal_dict.get(1, ("", None))[1],  # Snack1 and rate
-                meal_dict[2], None, #.get(2, ("", None))[0], meal_dict.get(2, ("", None))[1],  # Lunch and rate
-                meal_dict[3], None, #.get(3, ("", None))[0], meal_dict.get(3, ("", None))[1],  # Snack2 and rate
-                meal_dict[4], None, #.get(4, ("", None))[0], meal_dict.get(4, ("", None))[1],  # Dinner and rate
+                meal_dict[0], None,
+                meal_dict[1], None,
+                meal_dict[2], None,
+                meal_dict[3], None,
+                meal_dict[4], None,
                 meal_explanations_dict[0],
                 meal_explanations_dict[1],
                 meal_explanations_dict[2],
@@ -376,37 +370,6 @@ def update_rates_of_meal(id_meal, meal_type, meal_rate):
         print(f"An error occurred: {e}")
     finally:
         # Close the connection
-        conn.close()
-
-
-# Add client feedback to the clients_feedback_for_nutri
-def add_feedback(client_id, feed_text):
-    model = genai.GenerativeModel('gemini-pro')
-    genai.configure(api_key='AIzaSyC1KgUEcEDdzGtPhOx7FsJ6cYxexjA1mUE')
-
-    cont = 'is this text : ' + feed_text + ' has any meaning? if Yes the response should be "True", ' \
-                                           'otherwise "False"'
-
-    response = model.generate_content(cont)
-    response_text = response.text
-    if response_text == "False":
-        print(f"This feedback: {feed_text} has no meaning, Therefor, ignored.")
-    else:
-        conn = sqlite3.connect('my_rules.db')
-        c = conn.cursor()
-
-        # Get the current date in the format that your database expects (usually YYYY-MM-DD)
-        current_date = datetime.now().strftime('%Y-%m-%d')
-
-        # SQL statement to insert a new row into the table
-        c.execute('''
-                INSERT INTO clients_feedback_for_nutri (id_client, date_of_feedback, feedback)
-                VALUES (?, ?, ?)
-            ''', (client_id, current_date, feed_text))
-
-        # Commit the changes to the database
-        conn.commit()
-        #print("Feedback added successfully.")
         conn.close()
 
 
@@ -768,9 +731,7 @@ def get_random_value_from_range(normal_range):
         upper = float(lower) + 150
     lower = float(lower)
     upper = float(upper)
-    #print('lower is ', lower)
-    #print('upper is ', upper)
-    #print('lower is ', lower)
+
     return random.uniform(lower, upper)
 
 
@@ -797,23 +758,16 @@ def get_previous_ranked_meals(id_client, meal_type):
     rating_column = meal_rating_columns[meal_type]
 
     # Construct the SQL query, exclude the most recent date
-    query = f"""
-            SELECT {meal_type}, {rating_column}
+    query = f"""SELECT {meal_type}, {rating_column}
             FROM clients_meals_with_rates
             WHERE id_client = ? AND {rating_column} IS NOT NULL
-            AND date_of_meal_plan < (
-            SELECT MAX(date_of_meal_plan)
-            FROM clients_meals_with_rates
-            WHERE id_client = ?
-        )
-        ORDER BY date_of_meal_plan DESC
-            """
+        
+        """
 
     # Execute the query
-    cursor.execute(query, (id_client, id_client))
+    cursor.execute(query, (id_client, ))
 
     # Fetch all results and convert them into tuples
-    # Fetch all results
     rows = cursor.fetchall()
 
     # Check if the fetch retrieved any rows
@@ -823,8 +777,6 @@ def get_previous_ranked_meals(id_client, meal_type):
         return ranked_meals
     else:
         return []
-
-    #return {} # dict[meal_type]
 
 
 # Gets the ids of other clients that are found similar (similarity_score>0.9) for the giving id_client
@@ -948,7 +900,6 @@ def get_rules_by_nutri(id_client):
     # If the blood test is either 'under' or 'above' normal, add its restrictions to the list
     # Also prepare a list for 'other' restrictions
     dict_rest = {}
-    #dict_rest['other'] = []
     other_rules = []
 
     # Connect to the database to get 'other' restrictions
@@ -961,9 +912,7 @@ def get_rules_by_nutri(id_client):
 
     # Add 'other' restrictions to the restriction_dict
     for restriction in other_restrictions:
-        #restriction_dict['other'].append(restriction[0])
-        #if restriction:
-        other_rules.append(restriction[0])#dict_rest['other'].append(restriction[0])
+        other_rules.append(restriction[0])
 
     # Close the database connection
     cursor.close()
@@ -973,10 +922,6 @@ def get_rules_by_nutri(id_client):
     unique_other_strings = set(s.lower() for s in other_rules)
     other_rules = list(unique_other_strings)
 
-    #print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
-    #print(other_rules)
-    #print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
-
 
     for test_name, test_result in client_tests.items():
         if test_name not in ['age', 'gender', 'health_condition']:
@@ -985,10 +930,6 @@ def get_rules_by_nutri(id_client):
                 test_name = match.group(1)
             if test_name != 'other':
                 dict_rest[test_name] = {'above': [], 'under': [], 'other': []}
-
-
-
-
 
                 # Iterate over the client's blood tests
 
@@ -1003,7 +944,7 @@ def get_rules_by_nutri(id_client):
                             if not in_range and range_status in ['above', 'under']:
 
                                 dict_rest[test_name][range_status].extend(threshold_dict[range_status])
-                                #restriction_dict[range_status].extend(threshold_dict[range_status])
+
 
     for test_name, value_dict in dict_rest.items():
         for case in value_dict:
@@ -1020,7 +961,6 @@ def get_rules_by_nutri(id_client):
                     non_empty_values[sub_key] = [v for v in sub_value if v.strip()]
             if any(non_empty_values.values()):
                 filtered_data[key] = non_empty_values
-
 
     return filtered_data, other_rules
 
@@ -1111,6 +1051,38 @@ def classify_comment(comment):
 
 
 #########################################################  From here on, these functions uses API calls.
+
+
+# Add client feedback to the clients_feedback_for_nutri
+def add_feedback(client_id, feed_text):
+    model = genai.GenerativeModel('gemini-pro')
+    genai.configure(api_key=os.getenv("MY_API_KEY"))
+
+    cont = 'is this text : ' + feed_text + ' has any meaning? if Yes the response should be "True", ' \
+                                           'otherwise "False"'
+
+    response = model.generate_content(cont)
+    response_text = response.text
+    if response_text == "False":
+        print(f"This feedback: {feed_text} has no meaning, Therefor, ignored.")
+    else:
+        conn = sqlite3.connect('my_rules.db')
+        c = conn.cursor()
+
+        # Get the current date in the format that your database expects (usually YYYY-MM-DD)
+        current_date = datetime.now().strftime('%Y-%m-%d')
+
+        # SQL statement to insert a new row into the table
+        c.execute('''
+                INSERT INTO clients_feedback_for_nutri (id_client, date_of_feedback, feedback)
+                VALUES (?, ?, ?)
+            ''', (client_id, current_date, feed_text))
+
+        # Commit the changes to the database
+        conn.commit()
+        #print("Feedback added successfully.")
+        conn.close()
+
 
 
 # Returns a number that indicates his progress in scale from 0-10 based on his feedbacks if exists,
@@ -1347,34 +1319,35 @@ def get_new_meal_plan(id_client, daily_cal):
     prompt += f"\n\n"
 
     meal_type_list = ['breakfast', 'snack1', 'lunch', 'snack2', 'dinner']
+    k = 1
+    prev_meal_rates_prompt = f""
     for meal_type in meal_type_list:
         prev_meals = get_previous_ranked_meals(id_client, meal_type)  # list of tuples
-
         if prev_meals:
-            # print('prev_meals: ', prev_meals)
-            prompt += f"\nThese are previous meals and their rate of satisfaction of this client:\n "
-            k = 1
             for meal_type_c, value in prev_meals:
-                prompt += f"option {k}: {meal_type_c} with rate of satisfaction: {value}, \n"
+                prev_meal_rates_prompt += f"option {k}: {meal_type_c} with rate of satisfaction: {value}, \n\n"
                 k += 1
 
-            prompt += f"\n\n"
+
+    if prev_meal_rates_prompt:
+        prompt += f"\nThese are previous meals and their rate of satisfaction of this client:\n {prev_meal_rates_prompt}"
+        prompt += f"\n\n"
 
     similar_clients = get_similar_clients(id_client)
-    similar_client_meal_prompt = '\n'
+    similar_client_meal_prompt = f""
     if similar_clients:
+        k = 1
         for id_c in similar_clients:
             for meal_type in meal_type_list:
                 prev_meals_similar_client = get_previous_ranked_meals(id_c, meal_type)
                 if prev_meals_similar_client:
-                    k=1
                     for meal_type_c, value in prev_meals_similar_client:#prev_meals_similar_client.items():
-                        if value in ['satisfied', 'highly satisfied']:
-                            similar_client_meal_prompt += f"recommendation {k}: {meal_type_c} with rate of satisfaction: {value},\n"
+                        if value.lower() in ['satisfied', 'highly satisfied']:
+                            similar_client_meal_prompt += f"recommendation {k}: {meal_type_c} with rate of satisfaction: {value},\n\n"
                             k += 1
-        if similar_client_meal_prompt:
-            prompt += f"\nThese are previous meals and their rate of satisfaction of other clients that are \
-                            'considered very similar to this client, that you can refer to: {similar_client_meal_prompt}"
+    if similar_client_meal_prompt:
+        prompt += f"\nThese are previous meals and their rate of satisfaction of other clients that are" \
+                        f"considered very similar to this client, that you can refer to: {similar_client_meal_prompt}"
 
 
 
@@ -1424,9 +1397,10 @@ def get_new_meal_plan(id_client, daily_cal):
 
         meal_index += 1
 
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-    print(meals_info)
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+
+    # print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+    # print(meals_info)
+    # print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
 
     return response_text, meals_info
 
