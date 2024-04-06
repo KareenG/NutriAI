@@ -26,7 +26,9 @@ Before you begin, ensure you have the following installed:
 
 
 2. Create and activate the virtual environment using the provided environment.yml file:
-    Once openning the repository locally in pycharm, a comment will be presented in the upper part of the .py files, the left one let add interperter using the yml file in this directory. By clicking on this the envirnoment will be set.
+    Once openning the repository locally in pycharm, go to settings and make sure that the Python Interpreter is set to <No interpreter>, only then a comment will be presented in the upper part of the .py files, the left one lets to add interperter using the yml file in this directory. By clicking on this the envirnoment will be set.
+   ![image](https://github.com/KareenG/NutriAI/assets/66648432/dfe85119-ad4a-41be-a6d7-7830f1113f3c)
+
     
 
 ## Configuration
