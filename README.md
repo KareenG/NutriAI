@@ -22,12 +22,11 @@ Before you begin, ensure you have the following installed:
     bash
     git clone https://github.com/KareenG/NutriAIPlanner.git
     cd NutriAIPlanner
-    
+    or download as a ZIP file then extract the repository locally(I reccomend this way).
+
 
 2. Create and activate the virtual environment using the provided environment.yml file:
-    bash
-    conda env create -f environment.yml
-    conda activate NutriAIPlanner-env
+    Once openning the repository locally in pycharm, a comment will be presented in the upper part of the .py files, the left one let add interperter using the yml file in this directory. By clicking on this the envirnoment will be set.
     
 
 ## Configuration
