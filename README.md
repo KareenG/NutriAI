@@ -29,6 +29,7 @@ Before you begin, ensure you have the following installed:
     Once openning the repository locally in pycharm, go to settings and make sure that the Python Interpreter is set to No interpreter ![image](https://github.com/KareenG/NutriAI/assets/66648432/5dcef228-0637-4a55-ad18-8b74429116f8)
    , only then a comment will be presented in the upper part of the .py files, the left one lets to add interperter using the yml file in this directory. By clicking on this the envirnoment will be set.
    ![image](https://github.com/KareenG/NutriAI/assets/66648432/dfe85119-ad4a-41be-a6d7-7830f1113f3c)
+   wait a few moments until getting this message: ![image](https://github.com/KareenG/NutriAI/assets/66648432/2c6ad4b8-e22c-4d21-a5f1-017fc5517580)
 
     
 
