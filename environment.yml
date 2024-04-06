@@ -1,4 +1,4 @@
-name: anacondaenv
+name: NutriAIPlanner_anacondaenv
 channels:
   - defaults
 dependencies:
@@ -466,4 +466,4 @@ dependencies:
     - streamlit-keyup==0.2.4
     - streamlit-toggle-switch==1.0.2
     - streamlit-vertical-slider==2.5.5
-prefix: C:\Users\Admin\anaconda3\envs\anacondaenv
+prefix: C:\Users\Admin\anaconda3\envs\NutriAIPlanner_anacondaenv
